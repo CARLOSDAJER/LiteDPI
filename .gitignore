@@ -1,0 +1,7 @@
+# Build output
+*.exe
+*.pdb
+dist/
+
+# Personal settings (created on first run)
+LiteDPI.ini
