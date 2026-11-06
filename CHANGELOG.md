@@ -1,7 +1,10 @@
 # Changelog
 
-## [Unreleased]
+## [1.1.0] - 2026-11-05
 
+- **Lighting per app.** Each game can set the mouse's lighting: a solid color, or off. The desktop can have its own color, or leave lighting to the mouse. Pick colors in Settings (presets or any color), and they preview on the mouse right away.
+- Settings file lines can carry a color: `cs2.exe = 800, #FF0000` (or `off`). Inline comments now start with `;` only.
+- `litedpi-probe features` lists the mouse's HID++ features and lighting zones; `litedpi-probe color FF0000|off|device` sets the lighting once.
 - MIT license.
 - Release builds can be code-signed through SignPath Foundation (see `docs/SIGNING.md`).
 

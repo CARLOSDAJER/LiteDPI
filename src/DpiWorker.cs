@@ -14,9 +14,11 @@ namespace LiteDPI
         readonly Thread thread;
         volatile bool running = true, force, checkNow;
         volatile int desired;
+        volatile int desiredColor = HidppDevice.ColorDevice;
 
+        const int Unknown = int.MinValue;
         HidppDevice dev;
-        int applied = -1;
+        int applied = -1, appliedColor = Unknown;
 
         // Read by the UI thread.
         public volatile string DeviceName;   // null = not connected
@@ -31,7 +33,7 @@ namespace LiteDPI
             thread.Start();
         }
 
-        public void Want(int dpi) { desired = dpi; wake.Set(); }
+        public void Want(int dpi, int color) { desired = dpi; desiredColor = color; wake.Set(); }
         /// <summary>Apply again even if nothing changed (after sleep, or after "Try").</summary>
         public void Reapply() { force = true; wake.Set(); }
         /// <summary>Something was plugged/unplugged: check the connection now.</summary>
@@ -56,21 +58,30 @@ namespace LiteDPI
                         }
                         Range = dev.GetDpiRange();
                         applied = -1;
+                        appliedColor = Unknown;
                         PrepareMode();
                         SetStatus(dev.Name, "");
                     }
 
-                    int want = desired;
-                    if (force) { force = false; applied = -1; }
+                    int want = desired, wantColor = desiredColor;
+                    if (force) { force = false; applied = -1; appliedColor = Unknown; }
+                    bool talked = false;
                     if (want > 0 && want != applied)
                     {
                         int dpi = Range != null ? Range.Snap(want) : want;
                         dev.SetDpi(dpi);
                         applied = want;
                         AppliedDpi = dpi;
-                        lastCheck = Environment.TickCount;
+                        talked = true;
                         Raise();
                     }
+                    if (wantColor != appliedColor)
+                    {
+                        if (dev.HasLighting) dev.SetLighting(wantColor);
+                        appliedColor = wantColor;
+                        talked = true;
+                    }
+                    if (talked) lastCheck = Environment.TickCount;
                     else if (checkNow || Environment.TickCount - lastCheck > 3000)
                     {
                         checkNow = false;
@@ -82,6 +93,7 @@ namespace LiteDPI
                 {
                     if (dev != null) { try { dev.Dispose(); } catch { } dev = null; }
                     applied = -1;
+                    appliedColor = Unknown;
                     SetStatus(null, e.Message);
                 }
             }

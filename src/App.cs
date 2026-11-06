@@ -87,7 +87,7 @@ namespace LiteDPI
         SettingsForm settings;
         IntPtr lastHwnd;
         string currentLabel = "Desktop";
-        int currentWant;
+        int currentWant, currentColor = HidppDevice.ColorDevice;
         bool paused, ghubWarned;
         int timerTicks;
         Icon currentIcon;
@@ -180,7 +180,8 @@ namespace LiteDPI
             Rule r = config.Find(path, name);
             currentLabel = r != null ? (name ?? r.Match) : "Desktop";
             currentWant = r != null ? r.Dpi : config.DesktopDpi;
-            if (!paused) worker.Want(currentWant);
+            currentColor = config.EffectiveColor(r);
+            if (!paused) worker.Want(currentWant, currentColor);
             UpdateTray();
         }
 
@@ -191,10 +192,10 @@ namespace LiteDPI
             worker.Reapply();
         }
 
-        /// <summary>Settings window "Try it" button.</summary>
-        public void TryDpi(int dpi)
+        /// <summary>Settings window "Try it" buttons and color picks: apply now, until the next app switch.</summary>
+        public void Try(int dpi, int color)
         {
-            worker.Want(dpi);
+            worker.Want(dpi, color);
             worker.Reapply();
         }
 

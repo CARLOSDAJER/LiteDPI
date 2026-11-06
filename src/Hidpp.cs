@@ -260,7 +260,7 @@ namespace LiteDPI
     public sealed class HidppDevice : IDisposable
     {
         const byte LONG_REPORT = 0x11, SHORT_REPORT = 0x10;
-        const int FEAT_ROOT = 0x0000, FEAT_NAME = 0x0005, FEAT_DPI = 0x2201, FEAT_ONBOARD = 0x8100;
+        const int FEAT_ROOT = 0x0000, FEAT_NAME = 0x0005, FEAT_DPI = 0x2201, FEAT_ONBOARD = 0x8100, FEAT_LED = 0x8070;
 
         readonly HidHandle io;
         readonly byte dev;
@@ -433,6 +433,89 @@ namespace LiteDPI
             byte fi = FeatureIndex(FEAT_ONBOARD);
             if (fi == 0) return;
             Request(fi, 1, (byte)mode);
+        }
+
+        // ---------- Lighting (HID++ feature 0x8070, Color LED Effects) ----------
+
+        public const int ColorDevice = -1; // hand lighting back to the mouse's own (onboard) settings
+        public const int ColorOff = -2;
+
+        class LightZone { public int Index, Location, StaticIdx = -1, OffIdx = -1; }
+        List<LightZone> zones;
+
+        List<LightZone> LightZones()
+        {
+            if (zones != null) return zones;
+            var list = new List<LightZone>();
+            byte fi = FeatureIndex(FEAT_LED);
+            if (fi != 0)
+            {
+                int count = Request(fi, 0)[0];
+                for (int z = 0; z < count; z++)
+                {
+                    var zi = Request(fi, 1, (byte)z);
+                    var lz = new LightZone { Index = z, Location = (zi[1] << 8) | zi[2] };
+                    for (int e = 0; e < zi[3]; e++)
+                    {
+                        var ei = Request(fi, 2, (byte)z, (byte)e);
+                        int id = (ei[2] << 8) | ei[3];
+                        if (id == 0x0001) lz.StaticIdx = e;
+                        if (id == 0x0000) lz.OffIdx = e;
+                    }
+                    list.Add(lz);
+                }
+            }
+            zones = list;
+            return zones;
+        }
+
+        public bool HasLighting { get { return LightZones().Count > 0; } }
+
+        /// <summary>
+        /// 0xRRGGBB = solid color on every zone, ColorOff = lights off, ColorDevice = let the mouse decide again.
+        /// Changes are not saved to the mouse's memory.
+        /// </summary>
+        public void SetLighting(int color)
+        {
+            byte fi = FeatureIndex(FEAT_LED);
+            if (fi == 0) return;
+            if (color == ColorDevice) { Request(fi, 8, 0); return; } // software control off
+            Request(fi, 8, 1);                                        // software control on
+            foreach (var z in LightZones())
+            {
+                if (color == ColorOff)
+                {
+                    if (z.OffIdx >= 0) Request(fi, 3, (byte)z.Index, (byte)z.OffIdx);
+                }
+                else if (z.StaticIdx >= 0)
+                {
+                    // zone, effect, R, G, B, ramp (0 = default fade); remaining params zero = not persisted
+                    Request(fi, 3, (byte)z.Index, (byte)z.StaticIdx,
+                        (byte)(color >> 16), (byte)(color >> 8), (byte)color, 0);
+                }
+            }
+        }
+
+        /// <summary>Raw current effect of a zone (for diagnostics).</summary>
+        public byte[] GetZoneEffect(int zone)
+        {
+            byte fi = FeatureIndex(FEAT_LED);
+            return fi == 0 ? new byte[0] : Request(fi, 14, (byte)zone);
+        }
+
+        /// <summary>Every HID++ feature the device reports (via FeatureSet 0x0001).</summary>
+        public List<int> ListFeatures()
+        {
+            var list = new List<int>();
+            byte fs = FeatureIndex(0x0001);
+            if (fs == 0) return list;
+            int count = Request(fs, 0)[0];
+            for (int i = 1; i <= count; i++)
+            {
+                var r = Request(fs, 1, (byte)i);
+                list.Add((r[0] << 8) | r[1]);
+            }
+            return list;
         }
 
         public void Dispose() { io.Dispose(); }

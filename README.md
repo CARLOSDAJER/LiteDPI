@@ -5,6 +5,7 @@ A tiny Windows tray app that sets your Logitech mouse's DPI per game, without G 
 G HUB's per-game profiles often don't kick in, so you end up at desktop speed in the middle of a match and have to restart G HUB. LiteDPI watches which window is in front and sets the mouse's DPI straight away. It's a single 40 KB exe with nothing to install alongside it.
 
 - **Per-game DPI.** Each game gets its own speed; everything else gets your desktop speed.
+- **Per-game lighting.** Each game can also set the mouse's color, or turn the lights off.
 - **Instant.** It switches the moment a game window comes to the front.
 - **Recovers on its own.** It re-applies the speed after the mouse is unplugged or the PC wakes from sleep.
 - **Your mouse buttons still work.** The DPI buttons use the speeds stored in the mouse; LiteDPI only sets the speed again when you switch programs.
@@ -36,21 +37,27 @@ A small coloured square appears in the system tray, showing the current DPI (for
 
 Double-click the icon (or right-click it and choose **Settings**) to set your desktop speed and add games. **Add a running program...** lists open windows, so start the game first. Use **Try it** to feel a speed before you save. Right-click the icon for **Pause switching** and **Start with Windows**.
 
+### Lighting
+
+Click a game's **Lighting** cell in Settings to choose a preset color, **Off**, or any color. The mouse shows your pick right away so you can see it. A game with no color uses the desktop lighting. If the desktop is set to **Mouse's own**, LiteDPI leaves the lighting alone and the mouse uses its built-in effect. Colors apply to every lighting zone, which on the G502 HERO means the logo and the side strip. Nothing is saved to the mouse.
+
 ### Settings file
 
 Settings live in `LiteDPI.ini` next to the exe. You can edit it by hand; changes apply instantly.
 
 ```ini
-desktop = 1600
-C:\Program Files\EA Games\Apex\ = 3000   ; any exe inside this folder
-cs2.exe = 800                              ; or just an exe name
+desktop = 1600                                     ; no color: the mouse keeps its own lighting
+C:\Program Files\EA Games\Apex\ = 3000, #FF0000   ; any exe inside this folder, red
+cs2.exe = 800, off                                 ; or just an exe name, lights off
 ```
 
 ## Supported mice
 
 LiteDPI works with Logitech mice that use HID++ 2.0 and support adjustable DPI. That covers most G-series mice from the last several years, wired and LIGHTSPEED. It's tested on a wired **G502 HERO**.
 
-To check your mouse, run `litedpi-probe.exe` from the install folder. It prints the mouse name, current DPI and supported range. `litedpi-probe set 1600` sets the DPI once.
+To check your mouse, run `litedpi-probe.exe` from the install folder. It prints the mouse name, current DPI and supported range. `litedpi-probe set 1600` sets the DPI once, and `litedpi-probe features` lists what the mouse supports, including its lighting zones.
+
+Lighting needs HID++ feature `0x8070` (Color LED Effects), which the G502 HERO and many G-series mice have. Mice with only the newer RGB feature (`0x8071`) still get per-game DPI, but LiteDPI doesn't change their lighting yet.
 
 ## Uninstall
 
@@ -80,7 +87,7 @@ GitHub Actions builds the zip and publishes the release. The install one-liner a
 
 ## How it works
 
-Logitech mice speak a protocol called HID++. LiteDPI talks to the mouse through the standard Windows HID API. It looks up the "Adjustable DPI" feature (`0x2201`) and sets the sensor DPI. When G HUB isn't running, LiteDPI also switches the mouse to onboard-memory mode (`0x8100`), so its buttons work without software. That switch isn't saved to the mouse and resets when you unplug it.
+Logitech mice speak a protocol called HID++. LiteDPI talks to the mouse through the standard Windows HID API. It looks up the "Adjustable DPI" feature (`0x2201`) and sets the sensor DPI. For lighting, it takes software control of the "Color LED Effects" feature (`0x8070`) and sets a static effect on each zone; it hands control back when no color is wanted. When G HUB isn't running, LiteDPI also switches the mouse to onboard-memory mode (`0x8100`), so its buttons work without software. That switch isn't saved to the mouse and resets when you unplug it.
 
 The protocol details come from the open-source projects [Solaar](https://github.com/pwr-Solaar/Solaar) and [libratbag](https://github.com/libratbag/libratbag). No Logitech software was decompiled.
 
