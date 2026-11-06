@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SignPath artifact configuration for LiteDPI.
+  Paste this into the SignPath project (Artifact configurations > default).
+  The input is the "unsigned" GitHub Actions artifact from .github/workflows/build.yml,
+  which is a zip holding just the two exe files.
+-->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <zip-file>
+    <pe-file path="LiteDPI.exe">
+      <authenticode-sign/>
+    </pe-file>
+    <pe-file path="litedpi-probe.exe">
+      <authenticode-sign/>
+    </pe-file>
+  </zip-file>
+</artifact-configuration>

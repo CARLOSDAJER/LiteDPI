@@ -84,7 +84,22 @@ Logitech mice speak a protocol called HID++. LiteDPI talks to the mouse through 
 
 The protocol details come from the open-source projects [Solaar](https://github.com/pwr-Solaar/Solaar) and [libratbag](https://github.com/libratbag/libratbag). No Logitech software was decompiled.
 
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
+
+- Committers and reviewers: [CARLOSDAJER](https://github.com/CARLOSDAJER)
+- Approvers: [CARLOSDAJER](https://github.com/CARLOSDAJER)
+
+Release builds are made from this repository by GitHub Actions on GitHub-hosted runners. Only tagged releases (`v*`) are signed, and every signing request is approved by hand.
+
+**Privacy policy:** This program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it. LiteDPI itself makes no network connections. The installer contacts GitHub only to download the release you asked it to install.
+
 ## Notes
 
-- Windows SmartScreen may warn about the exe because it isn't code-signed. Choose **More info > Run anyway**, or build it yourself from source.
+- Signed releases show **SignPath Foundation** as the publisher. Windows SmartScreen may still warn about a new release until it builds up download history. If it does, choose **More info > Run anyway**, or build LiteDPI yourself from source.
 - LiteDPI isn't affiliated with or endorsed by Logitech.
+
+## License
+
+[MIT](LICENSE)

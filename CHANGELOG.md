@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+- MIT license.
+- Release builds can be code-signed through SignPath Foundation (see `docs/SIGNING.md`).
+
 ## [1.0.0] - 2026-11-05
 
 First release.
